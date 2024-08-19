@@ -1,9 +1,7 @@
 ﻿using System.Threading.Tasks;
-using JetBrains.Annotations;
 
 namespace DalamudInjector
 {
-    [UsedImplicitly(ImplicitUseTargetFlags.Itself | ImplicitUseTargetFlags.WithInheritors)]
     public interface IService
     {
     }
