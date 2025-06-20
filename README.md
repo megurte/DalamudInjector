@@ -51,7 +51,7 @@ This will trigger `Initialize()` right after the object is constructed and depen
 ---
 
 ### How to Start
-1. Make installer class to register all dalamud services you requer 
+1. Make installer class to register all dalamud services you require 
 ```csharp
 public class ServiceInstaller
 {
