@@ -16,7 +16,7 @@
 
 The core container. It handles binding, resolving, and lifecycle management of components:
 
-```csharp
+```c#
 public interface IComponentContainer : IDisposable
 {
     T BindInstance<T>(T instance);
@@ -31,7 +31,7 @@ Use `BindInstance<T>()` to register an existing instance, or `Bind<T>()` to crea
 ### Component Lifecycle
 Any class that implements:
 
-```csharp
+```c#
 public interface IPluginComponent
 {
     void Release();
@@ -40,7 +40,7 @@ public interface IPluginComponent
 Will have its `Release()` method called during `Dispose()` of the container. This ensures clean unsubscription from Dalamud events or unmanaged resources.
 
 Optionally, classes may also implement:
-```csharp
+```c#
 public interface IInitializable
 {
     void Initialize();
@@ -52,7 +52,7 @@ This will trigger `Initialize()` right after the object is constructed and depen
 
 ### How to Start
 1. Make installer class to register all dalamud services you require 
-```csharp
+```c#
 public class ServiceInstaller
 {
     public readonly ServiceManager Service;
@@ -72,7 +72,7 @@ public class ServiceInstaller
 }
 ```
 2. Create installer and bind to the `_container` in your plugin's main class
-```csharp
+```c#
 public class YourPluginMain : IDalamudPlugin
 {
     private readonly ComponentContainer _container;
@@ -106,7 +106,7 @@ Now all the classes `BattleStatsManager`, `BattleStatsHandler`, `EnemyInfo` and 
 ---
 
 ### Plugin component code example
-```csharp
+```c#
 public class YourPluginWindow : IPluginComponent, IInitializable
 {
     private readonly IDataManager _dataManager;
