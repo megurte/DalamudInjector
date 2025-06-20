@@ -5,17 +5,20 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Dalamud.IoC;
 using Dalamud.Plugin;
+using WhichMount.ComponentInjector;
 
 namespace DalamudInjector
 {
     public class ServiceManager : IDisposable
     {
-        private readonly ServiceCollection _collection = new ServiceCollection();
+        private readonly ServiceCollection _collection = new ();
         public ServiceProvider? Provider { get; private set; }
+        public ComponentContainer Container { get; private set; }
 
         public ServiceManager()
         {
             _collection.AddSingleton(this);
+            Container = new ComponentContainer();
         }
 
         public IEnumerable<T> GetServicesImplementing<T>()
@@ -98,18 +101,21 @@ namespace DalamudInjector
             var wrapper = new DalamudServiceWrapper<T>(pi);
             _collection.AddSingleton(wrapper.Service);
             _collection.AddSingleton(pi);
+            Container.BindInstance(wrapper.Service);
             return this;
         }
 
         public ServiceManager AddExistingService<T>(T service) where T : class
         {
             _collection.AddSingleton(service);
+            Container.BindInstance(service);
             return this;
         }
 
         public void Dispose()
         {
             Provider?.Dispose();
+            Container.Dispose();
             GC.SuppressFinalize(this);
         }
 
@@ -120,9 +126,7 @@ namespace DalamudInjector
 
             object Func(IServiceProvider p)
             {
-                var constructor = type.GetConstructors()
-                    .OrderByDescending(c => c.GetParameters().Length)
-                    .FirstOrDefault();
+                var constructor = type.GetConstructors().MaxBy(c => c.GetParameters().Length);
                 if (constructor == null)
                     return Activator.CreateInstance(type) ??
                            throw new Exception($"No constructor available for {type.Name}.");
