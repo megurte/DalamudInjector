@@ -53,10 +53,54 @@ public class ComponentContainer : IComponentContainer
         }
 
         var instance = (T)Activator.CreateInstance(type, args)!;
+        
+        if (Attribute.IsDefined(type, typeof(InjectFields)))
+            InjectMembers(instance);
+        
         _instances[type] = instance;
 
         if (instance is IInitializable component)
             component.Initialize();
+    }
+    
+    private void InjectMembers(object instance)
+    {
+        var type = instance.GetType();
+
+        const BindingFlags flags =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        foreach (var f in type.GetFields(flags))
+        {
+            if (!Attribute.IsDefined(f, typeof(InjectAttribute)))
+                continue;
+
+            if (f.IsInitOnly)
+                throw new InvalidOperationException($"{type.Name}.{f.Name} is readonly, can't inject.");
+
+            var dep = ResolveByTypeOrThrow(f.FieldType, $"{type.Name}.{f.Name}");
+            f.SetValue(instance, dep);
+        }
+
+        foreach (var p in type.GetProperties(flags))
+        {
+            if (!Attribute.IsDefined(p, typeof(InjectAttribute)))
+                continue;
+
+            if (!p.CanWrite)
+                throw new InvalidOperationException($"{type.Name}.{p.Name} has no setter, can't inject.");
+
+            var dep = ResolveByTypeOrThrow(p.PropertyType, $"{type.Name}.{p.Name}");
+            p.SetValue(instance, dep);
+        }
+    }
+
+    private object ResolveByTypeOrThrow(Type depType, string target)
+    {
+        if (_instances.TryGetValue(depType, out var dep))
+            return dep;
+
+        throw new InvalidOperationException($"Missing dependency for {target}: {depType.Name}");
     }
 
     public T Resolve<T>()
